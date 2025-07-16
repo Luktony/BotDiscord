@@ -1,11 +1,8 @@
 require('dotenv').config();
-const ffmpegPath = require('ffmpeg-static');
-process.env.FFMPEG_PATH = ffmpegPath;
 const { Client, GatewayIntentBits } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior } = require('@discordjs/voice');
-const ytdl = require('ytdl-core');
+const playdl = require('play-dl');
 const ytSearch = require('yt-search');
-
 
 const client = new Client({
   intents: [
@@ -50,7 +47,7 @@ client.on('messageCreate', async message => {
     }
 
     let url;
-    if (ytdl.validateURL(query)) {
+    if (playdl.yt_validate(query) === "video") {
       url = query;
     } else {
       const searchResults = await ytSearch(query);
@@ -124,7 +121,7 @@ client.on('messageCreate', async message => {
   }
 });
 
-function tocarProximaMusica(message) {
+async function tocarProximaMusica(message) {
   if (queue.length === 0) {
     message.channel.send('📭 Fila vazia. Encerrando...');
     if (connection) {
@@ -135,11 +132,19 @@ function tocarProximaMusica(message) {
   }
 
   const url = queue.shift();
-  const stream = ytdl(url, { filter: 'audioonly' });
-  const resource = createAudioResource(stream);
+  try {
+    const stream = await playdl.stream(url);
+    const resource = createAudioResource(stream.stream, {
+      inputType: stream.type
+    });
 
-  player.play(resource);
-  message.channel.send(`🎶 Tocando agora: ${url}`);
+    player.play(resource);
+    message.channel.send(`🎶 Tocando agora: ${url}`);
+  } catch (err) {
+    console.error('Erro ao tocar:', err);
+    message.channel.send('❌ Erro ao tentar tocar a música. Pulando...');
+    tocarProximaMusica(message);
+  }
 }
 
 client.login(process.env.DISCORD_TOKEN);
