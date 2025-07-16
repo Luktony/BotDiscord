@@ -27,14 +27,12 @@ let connection = null;
 let currentVoiceChannel = null;
 
 client.once('ready', async () => {
-  console.log(`✅ Bot conectado como ${client.user.tag}`);
-
-
   await playdl.setToken({
     soundcloud: {
       client_id: process.env.SC_CLIENT_ID
     }
   });
+  console.log(`✅ Bot conectado como ${client.user.tag}`);
 });
 
 client.on('messageCreate', async message => {
