@@ -2,7 +2,6 @@ require('dotenv').config();
 const { Client, GatewayIntentBits } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior } = require('@discordjs/voice');
 const playdl = require('play-dl');
-const ytSearch = require('yt-search');
 
 const client = new Client({
   intents: [
@@ -30,7 +29,7 @@ client.on('messageCreate', async message => {
 
   if (command === '!tocar') {
     const query = args.join(' ');
-    if (!query) return message.reply('❗ Você precisa digitar um link ou nome da música.');
+    if (!query) return message.reply('❗ Você precisa digitar o nome da música.');
 
     const voiceChannel = message.member.voice.channel;
     if (!voiceChannel) return message.reply('❗ Você precisa estar em um canal de voz.');
@@ -46,39 +45,24 @@ client.on('messageCreate', async message => {
       connection.subscribe(player);
     }
 
-    let url;
-    if (playdl.yt_validate(query) === "video") {
-      url = query;
-    } else {
-      const searchResults = await ytSearch(query);
-      const videos = searchResults.videos.slice(0, 5);
+    try {
+      const results = await playdl.search(query, { source: { soundcloud: true } });
 
-      if (videos.length === 0) {
-        return message.reply('❌ Nenhum vídeo encontrado.');
+      if (!results || results.length === 0) {
+        return message.reply('❌ Nenhuma música encontrada no SoundCloud.');
       }
 
-      let response = '**Escolha uma música digitando o número (1 a 5):**\n\n';
-      videos.forEach((video, index) => {
-        response += `${index + 1}. ${video.title} (${video.timestamp})\n`;
-      });
+      const track = results[0];
+      queue.push(track.url);
 
-      await message.reply(response);
-
-      const filter = msg => msg.author.id === message.author.id && /^[1-5]$/.test(msg.content.trim());
-      try {
-        const collected = await message.channel.awaitMessages({ filter, max: 1, time: 15000, errors: ['time'] });
-        const choice = parseInt(collected.first().content.trim(), 10);
-        url = videos[choice - 1].url;
-      } catch {
-        return message.reply('⏱️ Tempo esgotado ou escolha inválida. Cancelando.');
+      if (player.state.status !== AudioPlayerStatus.Playing) {
+        tocarProximaMusica(message);
+      } else {
+        message.reply(`✅ Música adicionada à fila: ${track.title}`);
       }
-    }
-
-    queue.push(url);
-    if (player.state.status !== AudioPlayerStatus.Playing) {
-      tocarProximaMusica(message);
-    } else {
-      message.reply('✅ Música adicionada à fila.');
+    } catch (err) {
+      console.error('Erro ao buscar:', err);
+      message.reply('❌ Erro ao buscar música no SoundCloud.');
     }
   }
 
@@ -111,7 +95,7 @@ client.on('messageCreate', async message => {
   else if (command === '!comandos') {
     message.reply(`
 📜 **Comandos disponíveis:**
-- \`!tocar [nome ou link]\` → Toca uma música
+- \`!tocar [nome ou link]\` → Toca uma música do SoundCloud
 - \`!pular\` → Pula a música atual
 - \`!pausar\` → Pausa a música
 - \`!voltar\` → Retoma a música pausada
