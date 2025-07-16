@@ -1,0 +1,9 @@
+# Ignorar arquivos sensíveis
+.env
+
+# Ignorar dependências
+node_modules/
+
+# Outros arquivos que você não quer subir
+*.log
+.DS_Store
