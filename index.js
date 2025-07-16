@@ -1,7 +1,17 @@
-require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior } = require('@discordjs/voice');
-const playdl = require('play-dl');
+import dotenv from 'dotenv';
+dotenv.config();
+
+import { Client, GatewayIntentBits } from 'discord.js';
+import {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+  NoSubscriberBehavior
+} from '@discordjs/voice';
+
+import playdl from 'play-dl';
+
 
 const client = new Client({
   intents: [
@@ -20,7 +30,11 @@ let currentVoiceChannel = null;
 client.once('ready', () => {
   console.log(`✅ Bot conectado como ${client.user.tag}`);
 });
-
+await playdl.setToken({
+  soundcloud: {
+    client_id: process.env.SC_CLIENT_ID
+  }
+});
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
 
