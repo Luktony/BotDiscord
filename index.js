@@ -1,8 +1,11 @@
 require('dotenv').config();
+const ffmpegPath = require('ffmpeg-static');
+process.env.FFMPEG_PATH = ffmpegPath;
 const { Client, GatewayIntentBits } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, NoSubscriberBehavior } = require('@discordjs/voice');
 const ytdl = require('ytdl-core');
 const ytSearch = require('yt-search');
+
 
 const client = new Client({
   intents: [
